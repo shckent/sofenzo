@@ -11,9 +11,9 @@
     "bot": "node reminder-bot.js"
   },
   "keywords": [],
-  "author": "shckent",
+  "author": "Sofenzo",
   "license": "ISC",
-  "description": "Beauty Procedure Tracker Telegram Mini App",
+  "description": "Sofenzo Assistant — Beauty Procedure Tracker Telegram Mini App",
   "dependencies": {
     "@directus/sdk": "^21.1.0",
     "@twa-dev/sdk": "^8.0.2",
