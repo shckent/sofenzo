@@ -1,0 +1,37 @@
+{
+  "name": "sofenzo-assistant",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "start": "NODE_ENV=production node reminder-bot.js",
+    "dev:all": "node reminder-bot.js & vite",
+    "bot": "node reminder-bot.js"
+  },
+  "keywords": [],
+  "author": "shckent",
+  "license": "ISC",
+  "description": "Beauty Procedure Tracker Telegram Mini App",
+  "dependencies": {
+    "@directus/sdk": "^21.1.0",
+    "@twa-dev/sdk": "^8.0.2",
+    "axios": "^1.13.2",
+    "cors": "^2.8.5",
+    "dotenv": "^17.3.1",
+    "express": "^5.2.1",
+    "lucide-react": "^0.562.0",
+    "react": "^19.2.3",
+    "react-dom": "^19.2.3"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.1.18",
+    "@types/react": "^19.2.7",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^5.1.2",
+    "tailwindcss": "^4.1.18",
+    "typescript": "^5.9.3",
+    "vite": "^7.3.0"
+  }
+}
