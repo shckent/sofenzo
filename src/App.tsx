@@ -244,26 +244,26 @@ function App() {
 
   const addEvent = async () => {
     if (!newEventTitle.trim()) return;
-    const ev: CalendarEvent = {
-      id: generateId(),
-      title: newEventTitle.trim(),
-      date: selectedDate,
-      time: newEventTime || undefined,
-      color: newEventColor,
-    };
-
+    
     // Save to Directus
     try {
-      await directus.request(createItem('events', {
-        id: ev.id,
-        title: ev.title,
-        date: ev.date,
-        time: ev.time,
-        color: ev.color
+      const response = await directus.request(createItem('events', {
+        title: newEventTitle.trim(),
+        date: selectedDate,
+        time: newEventTime || undefined,
+        color: newEventColor
       }));
+
+      const ev: CalendarEvent = {
+        id: String((response as any).id),
+        title: newEventTitle.trim(),
+        date: selectedDate,
+        time: newEventTime || undefined,
+        color: newEventColor,
+      };
+      setEvents(prev => [...prev, ev]);
     } catch (e) { console.error('Failed to save event to Directus', e); }
 
-    setEvents(prev => [...prev, ev]);
     setNewEventTitle('');
     setNewEventTime('');
     setShowAddEvent(false);
@@ -281,24 +281,24 @@ function App() {
 
   const addTask = async () => {
     if (!newTaskTitle.trim()) return;
-    const task: DailyTask = {
-      id: generateId(),
-      title: newTaskTitle.trim(),
-      date: selectedDate,
-      completed: false,
-    };
 
     // Save to Directus
     try {
-      await directus.request(createItem('tasks', {
-        id: task.id,
-        title: task.title,
-        date: task.date,
-        completed: task.completed
+      const response = await directus.request(createItem('tasks', {
+        title: newTaskTitle.trim(),
+        date: selectedDate,
+        completed: false
       }));
+
+      const task: DailyTask = {
+        id: String((response as any).id),
+        title: newTaskTitle.trim(),
+        date: selectedDate,
+        completed: false,
+      };
+      setTasks(prev => [...prev, task]);
     } catch (e) { console.error('Failed to save task to Directus', e); }
 
-    setTasks(prev => [...prev, task]);
     setNewTaskTitle('');
     setShowAddTask(false);
     try { WebApp.HapticFeedback.impactOccurred('light'); } catch { }
@@ -436,7 +436,6 @@ function App() {
         try {
           for (const ev of newEventsToAdd) {
             await directus.request(createItem('events', {
-              id: ev.id,
               title: ev.title,
               date: ev.date,
               time: ev.time,
@@ -469,7 +468,6 @@ function App() {
         try {
           for (const task of newTasksToAdd) {
             await directus.request(createItem('tasks', {
-              id: task.id,
               title: task.title,
               date: task.date,
               completed: task.completed
