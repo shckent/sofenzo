@@ -1,0 +1,8 @@
+🗝️ OpenAI API Key loaded: Yes (sk-proj-...)
+📦 Directus Connection: Connected to https://directus-production-09cb.up.railway.app
+🤖 Clearing Telegram webhook...
+🌸 Sofenzo Assistant Bot started!
+🌸 Sofenzo Assistant server running on port 3001
+Failed to initialize bot: Request failed with status code 401
+Error getting updates: Request failed with status code 401
+⚠️ Telegram token is invalid. Stopping bot updates...

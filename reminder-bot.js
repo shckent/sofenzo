@@ -11,7 +11,7 @@ const __dirname = path.dirname(__filename);
 
 const telegramToken = process.env.TELEGRAM_BOT_TOKEN;
 const openaiApiKey = process.env.OPENAI_API_KEY;
-const directusUrl = process.env.VITE_DIRECTUS_URL;
+const directusUrl = process.env.DIRECTUS_TARGET_URL || process.env.VITE_DIRECTUS_URL;
 const directusToken = process.env.VITE_DIRECTUS_TOKEN;
 const PORT = process.env.PORT || 3001;
 
@@ -51,7 +51,6 @@ app.post('/api/chat', async (req, res) => {
 
   if (!openaiApiKey) {
     console.log('⚠️ No OpenAI API key - using Demo Mode');
-    // Return a simulated response for demo purposes when no API key
     const lastUserMsg = messages.filter(m => m.role === 'user').pop();
     const demoResponse = generateDemoResponse(lastUserMsg?.content || '');
     console.log('📤 Sending Demo response');
@@ -90,16 +89,14 @@ app.post('/api/chat', async (req, res) => {
   }
 });
 
-// ─── Demo Response Generator (when no OpenAI key) ──────────────────────────
+// ─── Demo Response Generator ───────────────────────────────────────────────
 
 function generateDemoResponse(userMessage) {
   const msg = userMessage.toLowerCase();
   const today = new Date().toISOString().split('T')[0];
   const tomorrow = new Date(Date.now() + 86400000).toISOString().split('T')[0];
 
-  // Logic for scheduling course (like Darsonval)
   if (msg.includes('дарсонваль') || msg.includes('курс')) {
-    // If it's a confirmation
     if (msg.includes('да') || msg.includes('ок') || msg.includes('подходит') || msg.includes('согласен') || msg.includes('yes')) {
       return `Отлично! ✅ Я добавил первые сеансы в ваш календарь.
 
@@ -111,7 +108,6 @@ function generateDemoResponse(userMessage) {
 Вы можете увидеть их во вкладке Календарь. Хотите добавить что-то еще? 🌸`;
     }
 
-    // Initial suggestion
     return `Отличный выбор! 💆‍♀️ Давайте составим курс дарсонвализации.
 
 📋 **Рекомендуемый курс:**
@@ -156,6 +152,38 @@ function generateDemoResponse(userMessage) {
 Просто скажите, что нужно сделать! 🌸`;
 }
 
+// ─── Directus Proxy (CORS fix) ──────────────────────────────────────────────
+
+app.use('/api/directus', async (req, res) => {
+  const innerPath = req.path.replace(/^\//, '');
+  const method = req.method;
+  const query = req.query;
+  const body = req.body;
+
+  if (!directusUrl) {
+    return res.status(500).json({ error: 'Directus URL not configured' });
+  }
+
+  try {
+    const response = await axios({
+      method,
+      url: `${directusUrl}/${innerPath}`,
+      params: query,
+      data: body,
+      headers: {
+        'Authorization': `Bearer ${directusToken}`,
+        'Content-Type': 'application/json'
+      }
+    });
+    res.status(response.status).json(response.data);
+  } catch (error) {
+    if (innerPath !== 'health') {
+      console.error(`❌ Directus Proxy Error [${method} ${innerPath}]:`, error.response?.data || error.message);
+    }
+    res.status(error.response?.status || 500).json(error.response?.data || { error: error.message });
+  }
+});
+
 // ─── Serve Static in Production ────────────────────────────────────────────
 
 if (process.env.NODE_ENV === 'production') {
@@ -166,13 +194,13 @@ if (process.env.NODE_ENV === 'production') {
 }
 
 // ─── Directus Logic ────────────────────────────────────────────────────────
+
 async function getOrUpdateUser(tgUserData) {
   if (!directusUrl) return null;
 
   try {
     const telegramId = String(tgUserData.id);
 
-    // Check if user exists
     const users = await directus.request(
       readItems('users', {
         filter: { telegram_id: { _eq: telegramId } },
@@ -184,7 +212,6 @@ async function getOrUpdateUser(tgUserData) {
       return users[0];
     }
 
-    // Create user if not exists
     const newUser = await directus.request(
       createItem('users', {
         telegram_id: telegramId,
@@ -192,7 +219,7 @@ async function getOrUpdateUser(tgUserData) {
         last_name: tgUserData.last_name,
         username: tgUserData.username,
         language: tgUserData.language_code || 'ru',
-        profile_summary: '', // Initial empty profile
+        profile_summary: '',
       })
     );
     console.log(`✅ Created new user in Directus: ${tgUserData.id}`);
@@ -226,7 +253,6 @@ async function handleUpdates() {
         const userData = update.message.from;
         const firstName = userData.first_name || '';
 
-        // Sync with Directus
         await getOrUpdateUser(userData);
 
         await axios.post(`https://api.telegram.org/bot${telegramToken}/sendMessage`, {
@@ -247,7 +273,7 @@ async function handleUpdates() {
       console.error('Error getting updates:', error.message);
       if (error.response?.status === 401) {
         console.warn('⚠️ Telegram token is invalid. Stopping bot updates...');
-        return; // Stop recurring updates
+        return;
       }
     }
   }
