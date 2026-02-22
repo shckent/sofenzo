@@ -356,7 +356,9 @@ function App() {
     // ADD_EVENT
     while ((match = patterns.ADD_EVENT.exec(text)) !== null) {
       try {
-        const data = JSON.parse(match[1].trim());
+        const rawJson = match[1].trim();
+        console.log('Parsing ADD_EVENT JSON:', rawJson);
+        const data = JSON.parse(rawJson);
         newEventsToAdd.push({
           id: generateId(),
           title: data.title || 'Процедура',
@@ -371,7 +373,9 @@ function App() {
     // UPDATE_EVENT
     while ((match = patterns.UPDATE_EVENT.exec(text)) !== null) {
       try {
-        const data = JSON.parse(match[1].trim());
+        const rawJson = match[1].trim();
+        console.log('Parsing UPDATE_EVENT JSON:', rawJson);
+        const data = JSON.parse(rawJson);
         if (data.id) eventsToUpdate.push({ id: data.id, data });
       } catch (e) { console.error('Failed to parse UPDATE_EVENT data', e); }
     }
@@ -379,7 +383,9 @@ function App() {
     // DELETE_EVENT
     while ((match = patterns.DELETE_EVENT.exec(text)) !== null) {
       try {
-        const data = JSON.parse(match[1].trim());
+        const rawJson = match[1].trim();
+        console.log('Parsing DELETE_EVENT JSON:', rawJson);
+        const data = JSON.parse(rawJson);
         if (data.id) eventIdsToDelete.push(data.id);
       } catch (e) { console.error('Failed to parse DELETE_EVENT data', e); }
     }
@@ -433,21 +439,23 @@ function App() {
     const processBatchUpdates = async () => {
       if (newEventsToAdd.length > 0 || eventIdsToDelete.length > 0 || eventsToUpdate.length > 0) {
         // Directus Sync
+        const createdEvents: CalendarEvent[] = [];
         try {
           for (const ev of newEventsToAdd) {
-            await directus.request(createItem('events', {
+            const res = await directus.request(createItem('events', {
               title: ev.title,
               date: ev.date,
               time: ev.time,
               description: ev.description,
               color: ev.color
             }));
+            createdEvents.push({ ...ev, id: String(res.id) }); // Ensure we use the real DB ID
           }
           for (const id of eventIdsToDelete) {
-            await directus.request(deleteItem('events', id));
+            await directus.request(deleteItem('events', id)).catch(e => console.warn("Delete event error", e));
           }
           for (const { id, data } of eventsToUpdate) {
-            await directus.request(updateItem('events', id, data));
+            await directus.request(updateItem('events', id, data)).catch(e => console.warn("Update event error", e));
           }
         } catch (e) { console.error('Failed to sync batch events to Directus', e); }
 
@@ -459,25 +467,27 @@ function App() {
           eventsToUpdate.forEach(({ id, data }) => {
             updated = updated.map(e => e.id === id ? { ...e, ...data } : e);
           });
-          return [...updated, ...newEventsToAdd];
+          return [...updated, ...createdEvents]; // Merge the DB-validated events, NOT the mock ones
         });
       }
 
       if (newTasksToAdd.length > 0 || taskIdsToDelete.length > 0 || tasksToUpdate.length > 0) {
         // Directus Sync
+        const createdTasks: DailyTask[] = [];
         try {
           for (const task of newTasksToAdd) {
-            await directus.request(createItem('tasks', {
+            const res = await directus.request(createItem('tasks', {
               title: task.title,
               date: task.date,
               completed: task.completed
             }));
+            createdTasks.push({ ...task, id: String(res.id) });
           }
           for (const id of taskIdsToDelete) {
-            await directus.request(deleteItem('tasks', id));
+            await directus.request(deleteItem('tasks', id)).catch(e => console.warn("Delete task error", e));
           }
           for (const { id, data } of tasksToUpdate) {
-            await directus.request(updateItem('tasks', id, data));
+            await directus.request(updateItem('tasks', id, data)).catch(e => console.warn("Update task error", e));
           }
         } catch (e) { console.error('Failed to sync batch tasks to Directus', e); }
 
@@ -489,7 +499,7 @@ function App() {
           tasksToUpdate.forEach(({ id, data }) => {
             updated = updated.map(t => t.id === id ? { ...t, ...data } : t);
           });
-          return [...updated, ...newTasksToAdd];
+          return [...updated, ...createdTasks];
         });
       }
 
