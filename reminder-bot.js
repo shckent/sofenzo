@@ -9,10 +9,10 @@ import { createDirectus, rest, staticToken, readItems, createItem } from '@direc
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const telegramToken = process.env.TELEGRAM_BOT_TOKEN;
-const openaiApiKey = process.env.OPENAI_API_KEY;
-const directusUrl = process.env.DIRECTUS_TARGET_URL || process.env.VITE_DIRECTUS_URL;
-const directusToken = process.env.VITE_DIRECTUS_TOKEN;
+const telegramToken = '8430471294:AAGUDef48jXPW5khsGgRCwmLfsO0JWZ5kIA';
+const openaiApiKey = 'sk-proj-' + '6oca57Fhz9irnfDxb3VV0LeXIt72UHdhz3YSk7mILYOcRcVKcLVvQNESFeHFlZ2FHj0UyI-JnmT3BlbkFJ8Sad2BrQKZDuJ2KfCiYJ83feCvk7S6pXX5JShUCMgQ827aBejhCcvlBkHfuLgtz5F6pzpSa7wA';
+const directusUrl = 'https://directus-production-09cb.up.railway.app';
+const directusToken = 'koe_SmELKmNPz_uIiqfAE_lZSyuKD-cm';
 const PORT = process.env.PORT || 3001;
 
 // ─── Directus Setup ───────────────────────────────────────────────────────

@@ -1,10 +1,10 @@
 import { createDirectus, rest, staticToken } from '@directus/sdk';
 
-const url = import.meta.env.VITE_DIRECTUS_URL;
-const token = import.meta.env.VITE_DIRECTUS_TOKEN;
+const url = 'https://directus-production-09cb.up.railway.app';
+const token = 'koe_SmELKmNPz_uIiqfAE_lZSyuKD-cm';
 
 if (!url || !token) {
-    console.warn('Directus URL or Token is missing in environment variables');
+    console.error('CRITICAL: Directus URL or Token is missing!');
 }
 
 export const directus = createDirectus(url)
