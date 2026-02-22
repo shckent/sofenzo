@@ -96,7 +96,7 @@ function formatDateStr(d: Date) {
   return d.toISOString().split('T')[0];
 }
 
-const API_BASE = 'https://sofenzo-production.up.railway.app';
+const API_BASE = '';
 
 const EVENT_COLORS = ['#f472b6', '#a78bfa', '#60a5fa', '#34d399', '#fbbf24', '#fb923c'];
 

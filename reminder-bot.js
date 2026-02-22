@@ -230,8 +230,18 @@ async function getOrUpdateUser(tgUserData) {
   }
 }
 
+// ─── Frontend App Serving ────────────────────────────────────────────────
+// Serve static files from the React dist folder
+app.use(express.static(path.join(__dirname, 'dist')));
+
+// Catch-all route to serve index.html for client-side routing
+app.use((req, res) => {
+  res.sendFile(path.join(__dirname, 'dist', 'index.html'));
+});
+
 app.listen(PORT, () => {
   console.log(`🌸 Sofenzo Assistant server running on port ${PORT}`);
+  console.log(`🌍 Serving frontend from /dist folder`);
 });
 
 // ─── Telegram Bot (Long Polling) ───────────────────────────────────────────
