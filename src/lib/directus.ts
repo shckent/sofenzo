@@ -1,14 +1,10 @@
-import { createDirectus, rest, staticToken } from '@directus/sdk';
+import { createDirectus, rest } from '@directus/sdk';
 
-const url = 'https://directus-production-09cb.up.railway.app';
-const token = 'koe_SmELKmNPz_uIiqfAE_lZSyuKD-cm';
-
-if (!url || !token) {
-    console.error('CRITICAL: Directus URL or Token is missing!');
-}
+// Use relative path so all requests go through the Express proxy
+// which injects the Auth token and avoids CORS errors.
+const url = '/api/directus';
 
 export const directus = createDirectus(url)
-    .with(staticToken(token))
     .with(rest());
 
 export default directus;
