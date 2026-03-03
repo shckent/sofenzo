@@ -9,10 +9,10 @@ import { createDirectus, rest, staticToken, readItems, createItem } from '@direc
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const telegramToken = '8430471294:AAGUDef48jXPW5khsGgRCwmLfsO0JWZ5kIA';
-const openaiApiKey = 'sk-proj-' + '6oca57Fhz9irnfDxb3VV0LeXIt72UHdhz3YSk7mILYOcRcVKcLVvQNESFeHFlZ2FHj0UyI-JnmT3BlbkFJ8Sad2BrQKZDuJ2KfCiYJ83feCvk7S6pXX5JShUCMgQ827aBejhCcvlBkHfuLgtz5F6pzpSa7wA';
-const directusUrl = 'https://directus-production-09cb.up.railway.app';
-const directusToken = 'koe_SmELKmNPz_uIiqfAE_lZSyuKD-cm';
+const telegramToken = process.env.TELEGRAM_BOT_TOKEN;
+const openaiApiKey = process.env.OPENAI_API_KEY;
+const directusUrl = process.env.VITE_DIRECTUS_URL;
+const directusToken = process.env.VITE_DIRECTUS_TOKEN;
 const PORT = process.env.PORT || 3001;
 
 // ─── Directus Setup ───────────────────────────────────────────────────────
@@ -184,15 +184,6 @@ app.use('/api/directus', async (req, res) => {
   }
 });
 
-// ─── Serve Static in Production ────────────────────────────────────────────
-
-if (process.env.NODE_ENV === 'production') {
-  app.use(express.static(path.join(__dirname, 'dist')));
-  app.get('*any', (req, res) => {
-    res.sendFile(path.join(__dirname, 'dist', 'index.html'));
-  });
-}
-
 // ─── Directus Logic ────────────────────────────────────────────────────────
 
 async function getOrUpdateUser(tgUserData) {
@@ -230,12 +221,23 @@ async function getOrUpdateUser(tgUserData) {
   }
 }
 
-// ─── Frontend App Serving ────────────────────────────────────────────────
+// ─── Serve Static & Routing ────────────────────────────────────────────────
+
 // Serve static files from the React dist folder
 app.use(express.static(path.join(__dirname, 'dist')));
 
+// Health Check
+app.get('/health', (req, res) => res.send('OK'));
+
+// Proxy routes (GPT and Directus) should be defined before the catch-all
+// ... (the /api/chat and /api/directus routes are already defined above)
+
 // Catch-all route to serve index.html for client-side routing
-app.use((req, res) => {
+app.get('*', (req, res) => {
+  // If the request is for an API route that wasn't matched, don't serve index.html
+  if (req.path.startsWith('/api/')) {
+    return res.status(404).json({ error: 'API route not found' });
+  }
   res.sendFile(path.join(__dirname, 'dist', 'index.html'));
 });
 

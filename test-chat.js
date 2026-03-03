@@ -20,7 +20,7 @@ const systemPrompt = `Ты — Sofenzo Assistant, умный и дружелюб
 `;
 
 async function test() {
-  const res = await axios.post('http://localhost:3002/api/chat', {
+  const res = await axios.post('http://localhost:3001/api/chat', {
     messages: [
       { role: 'system', content: systemPrompt },
       { role: 'user', content: 'добавь массаж на завтра в 15:00. всё согласовано, просто давай в календарь' }
