@@ -168,7 +168,11 @@ function App() {
       console.warn('Telegram WebApp init failed', e);
     }
 
-    const timer = setTimeout(() => setShowSplash(false), 2500);
+    const timer = setTimeout(() => {
+      // If we're not in Telegram (WebApp.initData is empty), 
+      // or if we're in a regular browser, force hide the splash.
+      setShowSplash(false);
+    }, 2500);
     return () => clearTimeout(timer);
   }, []);
 

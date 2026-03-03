@@ -233,7 +233,7 @@ app.get('/health', (req, res) => res.send('OK'));
 // ... (the /api/chat and /api/directus routes are already defined above)
 
 // Catch-all route to serve index.html for client-side routing
-app.get('*', (req, res) => {
+app.get(/.*/, (req, res) => {
   // If the request is for an API route that wasn't matched, don't serve index.html
   if (req.path.startsWith('/api/')) {
     return res.status(404).json({ error: 'API route not found' });
