@@ -11,17 +11,34 @@ const __dirname = path.dirname(__filename);
 
 const telegramToken = process.env.TELEGRAM_BOT_TOKEN;
 const openaiApiKey = process.env.OPENAI_API_KEY;
-const directusUrl = process.env.VITE_DIRECTUS_URL;
-const directusToken = process.env.VITE_DIRECTUS_TOKEN;
+const directusUrl = process.env.VITE_DIRECTUS_URL || process.env.DIRECTUS_URL;
+const directusToken = process.env.VITE_DIRECTUS_TOKEN || process.env.DIRECTUS_TOKEN;
 const PORT = process.env.PORT || 3001;
 
 // ─── Directus Setup ───────────────────────────────────────────────────────
+if (!directusUrl) {
+  console.error('\n❌ CRITICAL ERROR: VITE_DIRECTUS_URL or DIRECTUS_URL is not defined!');
+  console.error('If you are on Railway, please add these variables to your environment settings.');
+  process.exit(1);
+}
+
+if (!openaiApiKey) {
+  console.error('\n❌ CRITICAL ERROR: OPENAI_API_KEY is not defined!');
+  process.exit(1);
+}
+
+if (!telegramToken) {
+  console.error('\n❌ CRITICAL ERROR: TELEGRAM_BOT_TOKEN is not defined!');
+  process.exit(1);
+}
+
 const directus = createDirectus(directusUrl)
   .with(staticToken(directusToken))
   .with(rest());
 
-console.log('🗝️ OpenAI API Key loaded:', openaiApiKey ? `Yes (${openaiApiKey.substring(0, 8)}...)` : 'No');
-console.log('📦 Directus Connection:', directusUrl ? `Connected to ${directusUrl}` : 'Missing URL');
+console.log('🗝️ OpenAI API Key loaded:', `Yes (${openaiApiKey.substring(0, 8)}...)`);
+console.log('📦 Directus Connection:', `Targeting ${directusUrl}`);
+console.log('🤖 Telegram Bot Token:', `Loaded (${telegramToken.substring(0, 10)}...)`);
 
 // Global Error Handlers
 process.on('unhandledRejection', (reason, promise) => {
