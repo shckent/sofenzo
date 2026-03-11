@@ -1,7 +1,8 @@
+import 'dotenv/config';
 import { createDirectus, rest, staticToken, createItem } from '@directus/sdk';
 
-const directus = createDirectus('https://directus-production-09cb.up.railway.app')
-  .with(staticToken('koe_SmELKmNPz_uIiqfAE_lZSyuKD-cm'))
+const directus = createDirectus(process.env.VITE_DIRECTUS_URL)
+  .with(staticToken(process.env.VITE_DIRECTUS_TOKEN))
   .with(rest());
 
 async function test() {
