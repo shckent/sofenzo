@@ -170,7 +170,6 @@ function generateDemoResponse(userMessage) {
 }
 
 // ─── Directus Proxy (CORS fix) ──────────────────────────────────────────────
-
 app.use('/api/directus', async (req, res) => {
   const innerPath = req.path.replace(/^\//, '');
   const method = req.method;
@@ -181,23 +180,35 @@ app.use('/api/directus', async (req, res) => {
     return res.status(500).json({ error: 'Directus URL not configured' });
   }
 
+  console.log(`📡 Proxying ${method} to Directus: ${innerPath}`);
+  
   try {
-    const response = await axios({
+    const config = {
       method,
       url: `${directusUrl}/${innerPath}`,
       params: query,
-      data: body,
       headers: {
         'Authorization': `Bearer ${directusToken}`,
         'Content-Type': 'application/json'
-      }
-    });
+      },
+      timeout: 10000 // 10 seconds
+    };
+
+    // Only attach body for methods that should have one
+    if (['POST', 'PATCH', 'PUT'].includes(method.toUpperCase()) && body && Object.keys(body).length > 0) {
+      config.data = body;
+    }
+
+    const response = await axios(config);
+    console.log(`✅ Directus Proxy Success: ${method} ${innerPath} (${response.status})`);
     res.status(response.status).json(response.data);
   } catch (error) {
     if (innerPath !== 'health') {
       console.error(`❌ Directus Proxy Error [${method} ${innerPath}]:`, error.response?.data || error.message);
     }
-    res.status(error.response?.status || 500).json(error.response?.data || { error: error.message });
+    const status = error.code === 'ECONNABORTED' ? 504 : (error.response?.status || 500);
+    const message = error.code === 'ECONNABORTED' ? { error: 'Directus request timed out' } : (error.response?.data || { error: error.message });
+    res.status(status).json(message);
   }
 });
 

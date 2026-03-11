@@ -169,11 +169,18 @@ function App() {
     }
 
     const timer = setTimeout(() => {
-      // If we're not in Telegram (WebApp.initData is empty), 
-      // or if we're in a regular browser, force hide the splash.
       setShowSplash(false);
     }, 2500);
-    return () => clearTimeout(timer);
+
+    // Safety timeout: if sync is still running after 5 seconds, hide splash anyway
+    const safetyTimer = setTimeout(() => {
+      setShowSplash(false);
+    }, 5000);
+
+    return () => {
+      clearTimeout(timer);
+      clearTimeout(safetyTimer);
+    };
   }, []);
 
   // Persist messages to localStorage
@@ -188,13 +195,17 @@ function App() {
 
   const syncUserAndFetchData = async (user: any) => {
     try {
+      console.log('🔄 Syncing user data...');
       const telegramId = String(user.id);
 
-      // Find or create user in Directus
-      const existing = await directus.request(readItems('users', {
-        filter: { telegram_id: { _eq: telegramId } },
-        limit: 1,
-      })) as any[];
+      // Find or create user in Directus with a timeout/safety
+      const existing = await Promise.race([
+        directus.request(readItems('users', {
+          filter: { telegram_id: { _eq: telegramId } },
+          limit: 1,
+        })),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('Directus request timed out')), 8000))
+      ]) as any[];
 
       let dbUser: any;
 
