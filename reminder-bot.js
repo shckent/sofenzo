@@ -9,31 +9,15 @@ import { createDirectus, rest, staticToken, readItems, createItem } from '@direc
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const telegramToken = process.env.TELEGRAM_BOT_TOKEN?.trim();
-const openaiApiKey = process.env.OPENAI_API_KEY?.trim();
-
-// Pick the best Directus URL, avoiding placeholders
-function getCleanUrl(key) {
-  const val = process.env[key]?.trim();
-  if (!val || val.includes('your-directus-instance')) return null;
-  return val;
-}
-
-let directusUrl = getCleanUrl('VITE_DIRECTUS_URL') || getCleanUrl('DIRECTUS_URL');
-
-if (directusUrl && !directusUrl.startsWith('http')) {
-  directusUrl = `https://${directusUrl}`;
-}
-if (directusUrl && directusUrl.endsWith('/')) {
-  directusUrl = directusUrl.slice(0, -1);
-}
-const directusToken = (process.env.VITE_DIRECTUS_TOKEN || process.env.DIRECTUS_TOKEN)?.trim();
+const telegramToken = process.env.TELEGRAM_BOT_TOKEN;
+const openaiApiKey = process.env.OPENAI_API_KEY;
+const directusUrl = process.env.VITE_DIRECTUS_URL || process.env.DIRECTUS_URL;
+const directusToken = process.env.VITE_DIRECTUS_TOKEN || process.env.DIRECTUS_TOKEN;
 const PORT = process.env.PORT || 3001;
 
 // ─── Directus Setup ───────────────────────────────────────────────────────
 if (!directusUrl) {
   console.error('\n❌ CRITICAL ERROR: VITE_DIRECTUS_URL or DIRECTUS_URL is not defined!');
-  console.error('If you are on Railway, please add these variables to your environment settings.');
   process.exit(1);
 }
 
@@ -69,29 +53,8 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// ─── Health & Debug ────────────────────────────────────────────────────────
+// ─── Health check ────────────────────────────────────────────────────────
 app.get('/health', (req, res) => res.send('OK'));
-
-app.get('/api/debug', (req, res) => {
-  const envKeys = Object.keys(process.env).filter(k => 
-    k.includes('DIRECTUS') || k.includes('VITE') || k.includes('TOKEN') || k.includes('KEY')
-  );
-  
-  res.json({
-    activeDirectusUrl: directusUrl || 'NOT_SET',
-    env: {
-      VITE_DIRECTUS_URL: process.env.VITE_DIRECTUS_URL || 'NOT_SET',
-      DIRECTUS_URL: process.env.DIRECTUS_URL || 'NOT_SET',
-      RAW_VITE_DIRECTUS_URL: process.env.VITE_DIRECTUS_URL,
-      RAW_DIRECTUS_URL: process.env.DIRECTUS_URL
-    },
-    allRelevantKeys: envKeys,
-    hasDirectusToken: !!directusToken,
-    hasOpenAIKey: !!openaiApiKey,
-    hasTelegramToken: !!telegramToken,
-    nodeEnv: process.env.NODE_ENV || 'development'
-  });
-});
 
 // ─── GPT Chat Proxy ────────────────────────────────────────────────────────
 
@@ -216,8 +179,6 @@ app.use('/api/directus', async (req, res) => {
     return res.status(500).json({ error: 'Directus URL not configured' });
   }
 
-  console.log(`📡 Proxying ${method} to Directus: ${innerPath}`);
-  
   try {
     const config = {
       method,
@@ -227,23 +188,21 @@ app.use('/api/directus', async (req, res) => {
         'Authorization': `Bearer ${directusToken}`,
         'Content-Type': 'application/json'
       },
-      timeout: 10000 // 10 seconds
+      timeout: 15000
     };
 
-    // Only attach body for methods that should have one
     if (['POST', 'PATCH', 'PUT'].includes(method.toUpperCase()) && body && Object.keys(body).length > 0) {
       config.data = body;
     }
 
     const response = await axios(config);
-    console.log(`✅ Directus Proxy Success: ${method} ${innerPath} (${response.status})`);
     res.status(response.status).json(response.data);
   } catch (error) {
     if (innerPath !== 'health') {
       console.error(`❌ Directus Proxy Error [${method} ${innerPath}]:`, error.response?.data || error.message);
     }
-    const status = error.code === 'ECONNABORTED' ? 504 : (error.response?.status || 500);
-    const message = error.code === 'ECONNABORTED' ? { error: 'Directus request timed out' } : (error.response?.data || { error: error.message });
+    const status = error.response?.status || 500;
+    const message = error.response?.data || { error: error.message };
     res.status(status).json(message);
   }
 });
