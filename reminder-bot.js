@@ -9,10 +9,10 @@ import { createDirectus, rest, staticToken, readItems, createItem } from '@direc
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const telegramToken = process.env.TELEGRAM_BOT_TOKEN;
-const openaiApiKey = process.env.OPENAI_API_KEY;
-const directusUrl = process.env.VITE_DIRECTUS_URL || process.env.DIRECTUS_URL;
-const directusToken = process.env.VITE_DIRECTUS_TOKEN || process.env.DIRECTUS_TOKEN;
+const telegramToken = process.env.TELEGRAM_BOT_TOKEN?.trim();
+const openaiApiKey = process.env.OPENAI_API_KEY?.trim();
+const directusUrl = (process.env.VITE_DIRECTUS_URL || process.env.DIRECTUS_URL)?.trim();
+const directusToken = (process.env.VITE_DIRECTUS_TOKEN || process.env.DIRECTUS_TOKEN)?.trim();
 const PORT = process.env.PORT || 3001;
 
 // ─── Directus Setup ───────────────────────────────────────────────────────
