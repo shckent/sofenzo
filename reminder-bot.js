@@ -11,7 +11,14 @@ const __dirname = path.dirname(__filename);
 
 const telegramToken = process.env.TELEGRAM_BOT_TOKEN?.trim();
 const openaiApiKey = process.env.OPENAI_API_KEY?.trim();
-let directusUrl = (process.env.VITE_DIRECTUS_URL || process.env.DIRECTUS_URL)?.trim();
+
+// Pick the best Directus URL, avoiding placeholders
+let directusUrlCandidate = (process.env.VITE_DIRECTUS_URL || process.env.DIRECTUS_URL || '')?.trim();
+if (directusUrlCandidate.includes('your-directus-instance') && process.env.DIRECTUS_URL && !process.env.DIRECTUS_URL.includes('your-directus-instance')) {
+  directusUrlCandidate = process.env.DIRECTUS_URL.trim();
+}
+
+let directusUrl = directusUrlCandidate;
 if (directusUrl && !directusUrl.startsWith('http')) {
   directusUrl = `https://${directusUrl}`;
 }
@@ -64,10 +71,20 @@ app.use(express.json());
 app.get('/health', (req, res) => res.send('OK'));
 
 app.get('/api/debug', (req, res) => {
+  const envKeys = Object.keys(process.env).filter(k => 
+    k.includes('DIRECTUS') || k.includes('VITE') || k.includes('TOKEN') || k.includes('KEY')
+  );
+  
   res.json({
-    directusUrl: directusUrl || 'NOT_SET',
+    activeDirectusUrl: directusUrl || 'NOT_SET',
+    env: {
+      VITE_DIRECTUS_URL: process.env.VITE_DIRECTUS_URL || 'NOT_SET',
+      DIRECTUS_URL: process.env.DIRECTUS_URL || 'NOT_SET',
+      RAW_VITE_DIRECTUS_URL: process.env.VITE_DIRECTUS_URL,
+      RAW_DIRECTUS_URL: process.env.DIRECTUS_URL
+    },
+    allRelevantKeys: envKeys,
     hasDirectusToken: !!directusToken,
-    directusTokenLength: directusToken?.length || 0,
     hasOpenAIKey: !!openaiApiKey,
     hasTelegramToken: !!telegramToken,
     nodeEnv: process.env.NODE_ENV || 'development'
