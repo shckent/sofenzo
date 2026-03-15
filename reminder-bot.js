@@ -13,12 +13,14 @@ const telegramToken = process.env.TELEGRAM_BOT_TOKEN?.trim();
 const openaiApiKey = process.env.OPENAI_API_KEY?.trim();
 
 // Pick the best Directus URL, avoiding placeholders
-let directusUrlCandidate = (process.env.VITE_DIRECTUS_URL || process.env.DIRECTUS_URL || '')?.trim();
-if (directusUrlCandidate.includes('your-directus-instance') && process.env.DIRECTUS_URL && !process.env.DIRECTUS_URL.includes('your-directus-instance')) {
-  directusUrlCandidate = process.env.DIRECTUS_URL.trim();
+function getCleanUrl(key) {
+  const val = process.env[key]?.trim();
+  if (!val || val.includes('your-directus-instance')) return null;
+  return val;
 }
 
-let directusUrl = directusUrlCandidate;
+let directusUrl = getCleanUrl('VITE_DIRECTUS_URL') || getCleanUrl('DIRECTUS_URL');
+
 if (directusUrl && !directusUrl.startsWith('http')) {
   directusUrl = `https://${directusUrl}`;
 }
