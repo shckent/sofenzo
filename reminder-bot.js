@@ -12,6 +12,9 @@ const __dirname = path.dirname(__filename);
 const telegramToken = process.env.TELEGRAM_BOT_TOKEN?.trim();
 const openaiApiKey = process.env.OPENAI_API_KEY?.trim();
 let directusUrl = (process.env.VITE_DIRECTUS_URL || process.env.DIRECTUS_URL)?.trim();
+if (directusUrl && !directusUrl.startsWith('http')) {
+  directusUrl = `https://${directusUrl}`;
+}
 if (directusUrl && directusUrl.endsWith('/')) {
   directusUrl = directusUrl.slice(0, -1);
 }
@@ -57,8 +60,19 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// ─── Health Check ───────────────────────────────────────────────────────────
+// ─── Health & Debug ────────────────────────────────────────────────────────
 app.get('/health', (req, res) => res.send('OK'));
+
+app.get('/api/debug', (req, res) => {
+  res.json({
+    directusUrl: directusUrl || 'NOT_SET',
+    hasDirectusToken: !!directusToken,
+    directusTokenLength: directusToken?.length || 0,
+    hasOpenAIKey: !!openaiApiKey,
+    hasTelegramToken: !!telegramToken,
+    nodeEnv: process.env.NODE_ENV || 'development'
+  });
+});
 
 // ─── GPT Chat Proxy ────────────────────────────────────────────────────────
 
