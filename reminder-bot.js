@@ -11,7 +11,10 @@ const __dirname = path.dirname(__filename);
 
 const telegramToken = process.env.TELEGRAM_BOT_TOKEN?.trim();
 const openaiApiKey = process.env.OPENAI_API_KEY?.trim();
-const directusUrl = (process.env.VITE_DIRECTUS_URL || process.env.DIRECTUS_URL)?.trim();
+let directusUrl = (process.env.VITE_DIRECTUS_URL || process.env.DIRECTUS_URL)?.trim();
+if (directusUrl && directusUrl.endsWith('/')) {
+  directusUrl = directusUrl.slice(0, -1);
+}
 const directusToken = (process.env.VITE_DIRECTUS_TOKEN || process.env.DIRECTUS_TOKEN)?.trim();
 const PORT = process.env.PORT || 3001;
 
